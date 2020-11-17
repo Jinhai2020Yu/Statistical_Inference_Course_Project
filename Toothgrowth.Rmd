@@ -1,0 +1,68 @@
+---
+title: "Toothgrowth"
+author: "Jinhai_Yu"
+date: "11/15/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+This project compared the effects of OJ and VC on the tooth growth in guinea pigs,
+I did a brief summary with mean and quantile, also a bar plot to show the difference.
+At last, I did t test to see if the differences are significant or not with t.test().
+
+## Load library
+```{r load_library, echo=FALSE}
+library(datasets)
+library(dplyr)
+library(ggplot2)
+```
+
+## Load data and do a brief summary
+plot the comparison of tooth lengths between the two supplements according to different dosage
+
+```{r load_data and plot, fig.height=3}
+data("ToothGrowth")
+dim(ToothGrowth)
+str(ToothGrowth)
+ToothGrowth %>% group_by(supp) %>% 
+        summarise(mean = mean(len), quantile = quantile(len, probs = seq(0, 1, 0.25)))
+ggplot(data = ToothGrowth, aes(x = supp, y = len, fill = as.factor(supp))) +
+        geom_bar(stat = "identity") +
+        facet_grid(. ~ as.factor(dose)) +
+        labs(x = "Supplement", y = "Tooth Length", 
+             title = "The Effect of Supplements on Tooth Growth in Guinea Pigs") +
+        theme(plot.title = element_text(hjust = 0.5)) +
+        scale_fill_discrete(name = "Dosage (mg/day)") 
+```
+
+## simple t test
+
+```{r t test, tidy=TRUE, tidy.opts=list(width.cutoff=50)}
+# test the overall effect between the 2 supplements 
+# hypothesis is: there's no difference on the effect of tooth growth between the 2 supplements 
+options(width = 60)
+test1 <- t.test(len ~ supp, data = ToothGrowth)
+test1$conf.int
+cat(paste(c("The 95% confidence interval is ", format(test1$conf.int[1], digits = 4), " ", 
+            format(test1$conf.int[2], digits = 4), " that includes 0, so there's no significant difference 
+            between the two supplements on tooth growth."), sep = "", collapse = ""))
+# test the effect between the 2 supplements according to dosage
+# hypothesis is: there's no difference on the effect of tooth growth between the 2 supplements with dosage as 0.5, 1, 2
+test2 <- t.test(len ~ supp, data = subset(ToothGrowth, dose == 0.5))
+test3 <- t.test(len ~ supp, data = subset(ToothGrowth, dose == 1))
+test4 <- t.test(len ~ supp, data = subset(ToothGrowth, dose == 2))
+cat(paste(c("The p value of t test for the dosage 0.5, 1, 2 are ", 
+            format(test2$p.value, digits = 4), " ", format(test3$p.value, digits = 4), " ", format(test4$p.value, digits = 4), 
+            " \nrespectively." ," We could see that low dosage of OJ is better thant VC, and the difference 
+            is significant; but for high dosage there's no significant difference."), sep = "", collapse = ""))
+```
+
+## Conclusion
+
+The overall effect of OJ and VC on tooth growth are not different; however, when considering different dosage, 
+OJ showed better effect than VC on tooth growth on lower dosage (0.5 and 1), but there's no difference on high dosage (2). 
